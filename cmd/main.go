@@ -22,7 +22,7 @@ const (
 	typeToPhoto = "typePhoto"
 )
 
-var typesVideo = []string{".mp4", ".avi", ".mkv", ".webm", ".mov", "wmv"}
+var typesVideo = []string{".mp4", ".avi", ".mkv", ".webm", ".mov", ".wmv"}
 var typesPhoto = []string{".giv", ".png", ".jpeg", ".pdf", ".bmp", ".jpg", ".jpe", ".jfif"}
 
 func main() {
