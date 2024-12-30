@@ -3,27 +3,12 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io"
-	"net/http"
 	"net/url"
 	_ "net/url"
-	"os"
 	"path"
+	"storage"
 	"sync"
 )
-
-const (
-	pathToVideo = "video"
-	pathToPhoto = "photo"
-)
-
-const (
-	typeToVideo = "typeVideo"
-	typeToPhoto = "typePhoto"
-)
-
-var typesVideo = []string{".mp4", ".avi", ".mkv", ".webm", ".mov", ".wmv"}
-var typesPhoto = []string{".giv", ".png", ".jpeg", ".pdf", ".bmp", ".jpg", ".jpe", ".jfif"}
 
 func main() {
 	urls := []string{
@@ -38,12 +23,12 @@ func main() {
 		wg.Add(1)
 		go func(url string) {
 			defer wg.Done()
-			ext, err := checkExtensionFile(url)
+			ext, err := storage.CheckExtensionFile(url)
 			if err != nil {
 				fmt.Println(err)
 			}
 
-			typeFile, err := checkTypeFile(ext)
+			typeFile, err := storage.CheckTypeFile(ext)
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -57,66 +42,15 @@ func main() {
 	wg.Wait()
 }
 
-func downloadFile(filepath string, url string) error {
-	resp, err := http.Get(url)
-	if err != nil {
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	out, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-
-	defer out.Close()
-
-	_, err = io.Copy(out, resp.Body)
-	if err != nil {
-		return err
-	}
-	return err
-}
-
-func checkExtensionFile(urlStr string) (string, error) {
-	parsedURL, err := url.Parse(urlStr)
-	if err != nil {
-		return "", err
-	}
-
-	fileName := path.Base(parsedURL.Path)
-	ext := path.Ext(fileName)
-
-	if ext == "" {
-		return "", errors.New("не удалось извлечь расширение из URL")
-	}
-
-	return ext, nil
-}
-
-func checkTypeFile(typeFile string) (string, error) {
-	for _, v := range typesVideo {
-		if typeFile == v {
-			return typeToVideo, nil
-		}
-	}
-
-	for _, v := range typesPhoto {
-		if typeFile == v {
-			return typeToPhoto, nil
-		}
-	}
-	return "", errors.New("type file not found")
-}
-
 func redirectFileToDirectory(urlStr string, typeFile string) error {
 	var dir string
 
-	if typeFile == typeToVideo {
-		dir = pathToVideo
-	} else if typeFile == typeToPhoto {
-		dir = pathToPhoto
+	if typeFile == storage.TypeToVideo {
+		dir = storage.PathToVideo
+	} else if typeFile == storage.TypeToPhoto {
+		dir = storage.PathToPhoto
+	} else if typeFile == storage.TypeToDocument {
+		dir = storage.PathToDocument
 	} else {
 		return errors.New("Ошибка. Такого типа файла не существует")
 	}
@@ -130,7 +64,7 @@ func redirectFileToDirectory(urlStr string, typeFile string) error {
 
 	filePath := fmt.Sprintf("%s/%s", dir, fileName)
 
-	err = downloadFile(filePath, urlStr)
+	err = storage.DownloadFile(filePath, urlStr)
 	if err != nil {
 		return err
 	}
